@@ -93,13 +93,11 @@ jobs:
                    cd backend
                    npm install
                    npm audit --audit-level=critica
-  notify:
-        docker:
-            - image: 'cimg/base:stable'
-        steps:
            - slack/notify:
+               channel: C03DAJYL3SM
                event: fail
-               template: basic_fail_1         
+               template: basic_fail_1
+
            
 workflows:
   default:
@@ -114,7 +112,3 @@ workflows:
           requires: [build-frontend]
       - scan-backend:
           requires: [build-backend]
-  send-notification:
-    jobs:
-      - notify:
-          context: udapeople_notify  
