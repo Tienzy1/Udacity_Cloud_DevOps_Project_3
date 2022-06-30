@@ -93,10 +93,14 @@ jobs:
                    cd backend
                    npm install
                    npm audit --audit-level=critica
+  notify:
+        docker:
+            - image: 'cimg/base:stable'
+        steps:
            - slack/notify:
                event: fail
-               template: basic_fail_1
-            
+               template: basic_fail_1         
+           
 workflows:
   default:
     jobs:
