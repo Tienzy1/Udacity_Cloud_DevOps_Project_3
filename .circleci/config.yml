@@ -377,43 +377,39 @@ jobs:
       - revert-migrations        
       
   cleanup:
-        docker:
-            - image: amazon/aws-cli
-        steps:
-            - checkout
-            - run:
-                name: Install dependencies
-                command: |
-                    yum install python3 -y
-                    yum install gzip tar curl -y
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: Get old stack workflow id
-                command: |
-                    echo "###### Fetch the Old workflow ID ######"
-                    export OldWorkflowID=$(aws cloudformation \
-                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                    --no-paginate --output text)
-                    echo OldWorkflowID: "${OldWorkflowID}"
-                    echo "###### Fetch the current workflow ID ######"
-                    echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-                    echo "###### Fetch the stack names ######"
-                    export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                    --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-                    echo Stack names: "${STACKS[@]}"
-            - run:
-                name: Remove old stacks and files
-                command: |
-                    if [[ "${CIRCLE_WORKFLOW_ID}" =~ "${OldWorkflowID}" ]]
-                    then
-                        aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-                        aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-                        aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-                        echo "#### old stack deletion done ####"
-                    else
-                        echo "#### Nothing to be deleted here ####"
-                    fi 
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: |
+            yum -y install tar
+            yum -y install gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Get OldWorkflowID
+          command: |
+            export OldWorkflowID=$(cat .circleci/files/OldWorkflowID.txt)
+            echo $OldWorkflowID
+            export STACKS=$(aws cloudformation list-stacks \
+            --query "StackSummaries[*].StackName" \
+            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
+            echo Stack names: "${STACKS[@]}"
+      - run:
+          name: Remove old stacks and files
+          command: |
+            export OldWorkflowID=$(cat .circleci/files/OldWorkflowID.txt)
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+            then
+              echo "--Delete confirmed--"
+              aws s3 rm "s3://$udapeople-{OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            else
+              echo --------cannot remove stacks ---------
+            fi 
           
           
 workflows:
