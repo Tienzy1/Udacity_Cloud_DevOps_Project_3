@@ -387,12 +387,15 @@ jobs:
             yum -y install tar
             yum -y install gzip
       - run:
-          name: Remove old stacks and files
+          name: Get OldWorkflowID
           command: |
             export STACKS=($(aws cloudformation list-stacks \
                 --query "StackSummaries[*].StackName" \
                 --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
-            echo Stack names: "${STACKS[@]}"
+            echo Stack names: "${STACKS[@]}"           
+      - run:
+          name: Remove old stacks and files
+          command: |
             export OldWorkflowID=$(curl --insecure https://kvdb.io/${KVDB_BUCKET}/old_workflow_id)
             echo Old Workflow ID: $OldWorkflowID 
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
