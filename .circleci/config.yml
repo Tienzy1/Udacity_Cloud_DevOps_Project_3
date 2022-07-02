@@ -369,7 +369,7 @@ jobs:
            
 workflows:
   default:
-    jobs:
+     jobs:
       - build-frontend
       - build-backend
       - test-frontend:
